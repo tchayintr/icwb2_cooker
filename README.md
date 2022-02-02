@@ -15,11 +15,8 @@ A tool for extracting segmented words from icwb2 collection.
 
 #### Usage
 ```
-usage: icwb2_cooker.py [-h] [--quiet] --dataset {as,cityu,msr,pku} 
-					   --train_data TRAIN_DATA --test_data TEST_DATA 
-					   [--output_data_path OUTPUT_DATA_PATH]
-                       [--input_data_format {utf8,txt}] [--output_data_format {sl,wl}] 
-					   [--unshuffle]
+usage: icwb2_cooker.py [-h] [--quiet] --dataset {as,cityu,msr,pku} --train_data TRAIN_DATA --test_data TEST_DATA [--output_data_path OUTPUT_DATA_PATH]
+                       [--input_data_format {utf8,txt}] [--output_data_format {sl,wl}] [--unshuffle]
 
 optional arguments:
   -h, --help            show this help message and exit
