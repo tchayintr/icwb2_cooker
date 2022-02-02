@@ -5,7 +5,7 @@ import random
 import re
 import sys
 '''
-    Script for cooking MSR corpus
+    Script for cooking icwb2 collection
 '''
 
 RANDOM_SEED = {'as': 'AS', 'cityu': 'CITYU', 'msr': 'MSR', 'pku': 'PKU'}
