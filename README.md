@@ -1,17 +1,18 @@
-# MSR Cooker
+# ICWB2 Cooker
 #### _icwb2_cooker_
 
-A tool for extracting segmented words from icwb2 collection.
+A tool for extracting segmented words from icwb2 collection (http://sighan.cs.uchicago.edu/bakeoff2005/). 
+
 
 #### Data formats
 - **sl**: sentence line
 - **wl**: word line
 
 #### Random SEED
-- AS
-- CITYU
-- MSR
-- PKU
+- as: AS
+- cityu: CITYU
+- msr: MSR
+- phu: PKU
 
 #### Usage
 ```
