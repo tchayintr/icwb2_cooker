@@ -287,7 +287,7 @@ def report(train_div_data, valid_div_data, test_div_data, vocabs=None):
         vocab_n_chars = sum([len(vocab) for vocab in vocabs])
         vocab_max_cpw = len(max(vocabs, key=len))
         vocab_min_cpw = len(min(vocabs, key=len))
-        vocab_avg_cpw = test_n_chars / n_vocabs  # chars/word
+        vocab_avg_cpw = vocab_n_chars / n_vocabs  # chars/word
 
         log('####')
         log('# [VOCAB] word: {} ...'.format(n_vocabs))

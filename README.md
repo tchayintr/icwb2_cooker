@@ -42,7 +42,7 @@ optional arguments:
 
 #### Example outputs
 ```
-Start time: 20220204_1443
+Start time: 20220204_1551
 
 ### arguments
 # quiet=False
@@ -84,5 +84,5 @@ save cooked vocab data: cooked/msr.vocab.sl
 ####
 # [VOCAB] word: 908 ...
 # [VOCAB] char: 1626 ...
-# [VOCAB] chars/word: min=1 max=4 avg=0.23237885462555066
+# [VOCAB] chars/word: min=1 max=4 avg=1.7907488986784141
 ```
