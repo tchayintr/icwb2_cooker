@@ -1,5 +1,8 @@
 import argparse
+from collections import Counter
 from datetime import datetime
+import math
+import opencc
 from pathlib import Path
 import random
 import re
@@ -18,6 +21,8 @@ SL_TOKEN_DELIM = ' '
 SL_ATTR_DELIM = '_'
 SL_FORMAT = 'sl'
 WL_FORMAT = 'wl'
+WORD_DELIM = '　'
+CONVERT_CONFIG_MAPPING = {'simplified': 't2s.json', 'traditional': 's2t.json'}
 
 
 def parse_args():
@@ -49,9 +54,16 @@ def parse_args():
     parser.add_argument('--output_data_format',
                         default='sl',
                         choices=['sl', 'wl'])
+    parser.add_argument('--output_character_type',
+                        default='simplified',
+                        choices=['simplified', 'traditional'],
+                        help='Specify to convert character type')
     parser.add_argument('--unshuffle',
                         action='store_true',
                         help='Specify to not shuffle data before cooking')
+    parser.add_argument('--export_vocab',
+                        action='store_true',
+                        help='Specify to export vocab from dataset')
 
     args = parser.parse_args()
     return args
@@ -67,18 +79,36 @@ def remove_whitespace_from_line(line):
     return line
 
 
+def convert_ctype(data, config):
+    converted_lines = []
+    converter = opencc.OpenCC(config)
+    for line in data:
+        tokens = line.split()
+        converted_lines.append(
+            ' '.join([converter.convert(token) for token in tokens]))
+    return converted_lines
+
+
+def construct_vocab(train_data, valid_data, test_data):
+    # TODO: separate vocab
+    counter = Counter()
+    for line in train_data:
+        counter.update(line.split())
+    for line in valid_data:
+        counter.update(line.split())
+    for line in test_data:
+        counter.update(line.split())
+    return [vocab for vocab in counter.keys()]
+
+
 def load_data(path, data_format):
     if data_format == 'utf8':
         data = load_utf8_data(path)
-
     elif data_format == 'txt':
         data = load_txt_data(path)
-
     else:
         print('Error: invalid data format: {}'.format(data_format),
               file=sys.stderr)
-        sys.exit()
-
     return data
 
 
@@ -96,16 +126,32 @@ def load_txt_data(path):
     sys.exit()
 
 
-def gen_div_data(data, data_format, dataset, shuffle=False, train=True):
+def gen_div_data(data,
+                 data_format,
+                 dataset,
+                 convert_config,
+                 shuffle=False,
+                 train=True):
     if data_format == SL_FORMAT:
-        data = gen_div_data_SL(data, dataset, shuffle=shuffle, train=train)
+        data = gen_div_data_SL(data,
+                               dataset,
+                               convert_config,
+                               shuffle=shuffle,
+                               train=train)
     elif data_format == WL_FORMAT:
-        data = gen_div_data_WL(data, dataset, shuffle=shuffle, train=train)
+        data = gen_div_data_WL(data,
+                               dataset,
+                               convert_config,
+                               shuffle=shuffle,
+                               train=train)
     return data
 
 
-def gen_div_data_SL(data, dataset, shuffle=False, train=True):
+def gen_div_data_SL(data, dataset, convert_config, shuffle=False, train=True):
     ls = data  # lines
+
+    # convert
+    ls = convert_ctype(ls, convert_config)
 
     # shuffle
     if shuffle and train:
@@ -113,15 +159,15 @@ def gen_div_data_SL(data, dataset, shuffle=False, train=True):
 
     # gen div data
     if train:
-        train_div_data = ls[:int(len(ls) * (1.0 - VALID_RATIO))]
-        valid_div_data = ls[int(len(ls) * (1.0 - VALID_RATIO)):]
+        train_div_data = ls[:math.floor(len(ls) * (1.0 - VALID_RATIO))]
+        valid_div_data = ls[math.floor(len(ls) * (1.0 - VALID_RATIO)):]
         return train_div_data, valid_div_data
     else:
         test_div_data = ls
         return test_div_data
 
 
-def gen_div_data_WL(data, dataset, shuffle=False, train=True):
+def gen_div_data_WL(data, dataset, convert_config, shuffle=False, train=True):
     raise NotImplementedError
     sys.exit()
 
@@ -130,7 +176,7 @@ def log(message, file=sys.stderr):
     print(message, file=file)
 
 
-def report(train_div_data, valid_div_data, test_div_data):
+def report(train_div_data, valid_div_data, test_div_data, vocabs=None):
     train_sents = train_div_data
     valid_sents = valid_div_data
     test_sents = test_div_data
@@ -235,6 +281,20 @@ def report(train_div_data, valid_div_data, test_div_data):
     log('# [TEST] chars/word: min={} max={} avg={}'.format(
         test_min_cpw, test_max_cpw, test_avg_cpw))
 
+    # vocab
+    if vocabs is not None:
+        n_vocabs = len(vocabs)
+        vocab_n_chars = sum([len(vocab) for vocab in vocabs])
+        vocab_max_cpw = len(max(vocabs, key=len))
+        vocab_min_cpw = len(min(vocabs, key=len))
+        vocab_avg_cpw = test_n_chars / n_vocabs  # chars/word
+
+        log('####')
+        log('# [VOCAB] word: {} ...'.format(n_vocabs))
+        log('# [VOCAB] char: {} ...'.format(vocab_n_chars))
+        log('# [VOCAB] chars/word: min={} max={} avg={}'.format(
+            vocab_min_cpw, vocab_max_cpw, vocab_avg_cpw))
+
 
 def cook(args):
     start_time = datetime.now().strftime('%Y%m%d_%H%M')
@@ -250,17 +310,27 @@ def cook(args):
     train_data = load_data(train_data_path, data_format=args.input_data_format)
     test_data = load_data(test_data_path, data_format=args.input_data_format)
 
+    convert_config = CONVERT_CONFIG_MAPPING[args.output_character_type]
     train_div_data, valid_div_data = gen_div_data(
         train_data,
         data_format=args.output_data_format,
         dataset=args.dataset,
+        convert_config=convert_config,
         shuffle=not args.unshuffle,
         train=True)
     test_div_data = gen_div_data(test_data,
                                  data_format=args.output_data_format,
                                  dataset=args.dataset,
+                                 convert_config=convert_config,
                                  shuffle=not args.unshuffle,
                                  train=False)
+
+    vocabs = None
+    if args.export_vocab:
+        vocabs = construct_vocab(train_div_data, valid_div_data, test_div_data)
+        output_vocab_path = '{}/{}.vocab.{}'.format(args.output_data_path,
+                                                    args.dataset,
+                                                    args.output_data_format)
 
     if args.output_data_path:
         output_train_data_path = '{}/{}.train.seg.{}'.format(
@@ -287,9 +357,15 @@ def cook(args):
                 print(testl, file=f)
             if not args.quiet:
                 log('save cooked test data: {}'.format(output_test_data_path))
+        if args.export_vocab:
+            with open(output_vocab_path, 'w', encoding='utf8') as f:
+                for vocab in vocabs:
+                    print(vocab, file=f)
+                if not args.quiet:
+                    log('save cooked vocab data: {}'.format(output_vocab_path))
 
     if not args.quiet:
-        report(train_div_data, valid_div_data, test_div_data)
+        report(train_div_data, valid_div_data, test_div_data, vocabs)
 
 
 def main():

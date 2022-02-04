@@ -15,6 +15,7 @@ cooked/*
 !cooked/msr.train.seg.sl
 !cooked/msr.valid.seg.sl
 !cooked/msr.test.seg.sl
+!cooked/msr.vocab.sl
 
 # caches
 ######################

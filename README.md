@@ -3,6 +3,8 @@
 
 A tool for extracting segmented words from icwb2 collection (http://sighan.cs.uchicago.edu/bakeoff2005/). 
 
+#### Requirement
+- opencc==1.1.3: https://pypi.org/project/OpenCC/
 
 #### Data formats
 - **sl**: sentence line
@@ -17,7 +19,8 @@ A tool for extracting segmented words from icwb2 collection (http://sighan.cs.uc
 #### Usage
 ```
 usage: icwb2_cooker.py [-h] [--quiet] --dataset {as,cityu,msr,pku} --train_data TRAIN_DATA --test_data TEST_DATA [--output_data_path OUTPUT_DATA_PATH]
-                       [--input_data_format {utf8,txt}] [--output_data_format {sl,wl}] [--unshuffle]
+                       [--input_data_format {utf8,txt}] [--output_data_format {sl,wl}] [--output_character_type {simplified,traditional}] [--unshuffle]
+                       [--export_vocab]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -31,13 +34,15 @@ optional arguments:
                         File path to output data
   --input_data_format {utf8,txt}, -f {utf8,txt}
   --output_data_format {sl,wl}
+  --output_character_type {simplified,traditional}
+                        Specify to convert character type
   --unshuffle           Specify to not shuffle data before cooking
-
+  --export_vocab        Specify to export vocab from dataset
 ```
 
 #### Example outputs
 ```
-Start time: 20220202_1626
+Start time: 20220204_1443
 
 ### arguments
 # quiet=False
@@ -47,11 +52,14 @@ Start time: 20220202_1626
 # output_data_path=cooked
 # input_data_format=utf8
 # output_data_format=sl
+# output_character_type=simplified
 # unshuffle=False
+# export_vocab=True
 
 save cooked train data: cooked/msr.train.seg.sl
 save cooked validdata: cooked/msr.valid.seg.sl
 save cooked test data: cooked/msr.test.seg.sl
+save cooked vocab data: cooked/msr.vocab.sl
 ### report
 # [TRAIN] sent: 90 ...
 # [TRAIN] word: 1741 ...
@@ -73,4 +81,8 @@ save cooked test data: cooked/msr.test.seg.sl
 # [TEST] words/sent: min=6 max=21 avg=12.8
 # [TEST] chars/sent: min=9 max=35 avg=21.1
 # [TEST] chars/word: min=1 max=4 avg=1.6484375
+####
+# [VOCAB] word: 908 ...
+# [VOCAB] char: 1626 ...
+# [VOCAB] chars/word: min=1 max=4 avg=0.23237885462555066
 ```
